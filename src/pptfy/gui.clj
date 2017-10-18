@@ -2,11 +2,13 @@
   (:require [pptfy.data :refer [pdf-file options num-of-pages]]
             [pptfy.render :refer [get-pages]]
             [pptfy.operation :as op])
-  (:import [javafx.stage Stage Screen]
+  (:import [javafx.application Platform]
+           [javafx.stage Stage Screen]
            [javafx.scene Scene]
            [javafx.scene.control Label]
+           [javafx.event ActionEvent EventHandler]
            [javafx.scene.layout AnchorPane BorderPane GridPane Pane VBox]
-           [javafx.scene.input KeyCombination KeyCombination$Modifier KeyCodeCombination KeyCode]
+           [javafx.scene.input KeyCombination KeyCombination$Modifier KeyCodeCombination KeyCode KeyEvent]
            [javafx.scene.image ImageView])
   (:gen-class
    :naem pptfy.gui))
@@ -31,7 +33,7 @@
 
 (def pdf-images (atom nil))
 
-(defonce finish-page (atom nil))
+(defonce finish-page (promise))
 
 (defn choice-set-page [image target] (.setImage target image ))
 
@@ -57,12 +59,13 @@
   (choice-mv-page mv-page audience-place audience-page))
 
 (defn mv-pages [mv-page]
-  (mv-now-page mv-page)
-  (mv-next-page mv-page)
-  (mv-audience-page mv-page))
+  (when-not (nil? mv-page)
+    (mv-now-page mv-page)
+    (mv-next-page mv-page)
+    (mv-audience-page mv-page)))
 
 (defn init-windows [main-stage]
-  (reset! finish-page (Label. "finish"))
+  (deliver finish-page (Label. "finish"))
   (deliver main-window main-stage)
   (deliver audience-window (new Stage)))
 
@@ -86,11 +89,23 @@
     (.add now-page 1 0)
     (.add next-page 2 0))
 
+  (doto main-scene
+    (.addEventFilter
+      KeyEvent/KEY_PRESSED
+      (proxy [EventHandler] []
+                       (handle [key-event]
+                         (let [num (op/key-input key-event)]
+                           (mv-pages num))))))
+
   (doto @main-window
     (.setTitle "Main Window")
     (.setScene main-scene)
     (.setX (.getMinX (.getBounds (.get (:screens screen-info) (:main-screen-num @options)))))
-    (.setY (.getMinY (.getBounds (.get (:screens screen-info) (:main-screen-num @options))))))
+    (.setY (.getMinY (.getBounds (.get (:screens screen-info) (:main-screen-num @options)))))
+    (.setOnCloseRequest
+     (proxy [EventHandler] []
+       (handle [e]
+         (Platform/exit)))))
 
   (doto audience-page
     (.setSmooth true)
@@ -99,14 +114,21 @@
     (-> .fitHeightProperty (.bind (-> audience-place .heightProperty (.multiply 1.0)))))
 
   (doto audience-place
-    (.setCenter audience-page)
-    #_(-> .getChildren (.add audience-page)))
+    (.setCenter audience-page))
+
+  (doto audience-scene
+    (.addEventFilter
+      KeyEvent/KEY_PRESSED
+      (proxy [EventHandler] []
+        (handle [key-event]
+          (let [num (op/key-input key-event)]
+            (mv-pages num))))))
 
   (doto @audience-window
     (.setTitle "Audience Window")
     (.setScene audience-scene)
-    (.setX (.getMaxX (.getBounds (.get (:screens screen-info) (:audience-screen-num @options)))))
-    (.setY (.getMaxY (.getBounds (.get (:screens screen-info) (:audience-screen-num @options)))))
+    (.setX (.getMinX (.getBounds (.get (:screens screen-info) (:audience-screen-num @options)))))
+    (.setY (.getMinY (.getBounds (.get (:screens screen-info) (:audience-screen-num @options)))))
     (.setFullScreen true)))
 
 (defn set-pdf-images []
@@ -115,10 +137,8 @@
 
 (defn start-gui [main-stage]
   (let [screen-info (get-screen-info)]
-    (dorun (map println (:screens screen-info)))
     (init-windows main-stage)
     (set-windows screen-info)
     (set-pdf-images)
-    (op/init-operation)
     (.show @audience-window)
     (.show @main-window)))

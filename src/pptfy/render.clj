@@ -13,6 +13,5 @@
         pdd (PDDocument/load pdf-path)
         pdfr (PDFRenderer. pdd)
         num-of-pages (.getNumberOfPages pdd)]
-    (println "pdf-path:" pdf-path)
     (reset! d/num-of-pages num-of-pages)
     (doall (map #(SwingFXUtils/toFXImage % nil) (map #(pdf-render pdfr %) (range num-of-pages))))))

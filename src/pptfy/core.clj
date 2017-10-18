@@ -19,8 +19,7 @@
     :default 1
     :parse-fn #(Integer/parseInt %)
     :validate [#(and (<= 0 %) (< % (count (Screen/getScreens)))) "Not found the num screen"]]
-   ["-h" "--help" "Show help"
-    :id :help]])
+   ["-h" "--help" "Show help"]])
 
 (defn -start [this stage]
   (if (and (not (nil? @pdf-file))
@@ -32,8 +31,21 @@
     (do (println "Please select pdf file.")
         (Platform/exit))))
 
+(defn help-println [summary]
+  (println
+"""USAGE
+[command] [filename] [options]
+
+options
+""")
+  (println summary))
+
+
 (defn -main
   "start pptfy"
   [& args]
-  (d/init-data (parse-opts args cli-options))
-  (Application/launch pptfy.core (into-array String [])))
+  (let [prmtrs (parse-opts args cli-options)]
+    (if (:help (:options prmtrs))
+      (help-println (:summary prmtrs))
+      (do (d/init-data prmtrs)
+          (Application/launch pptfy.core (into-array String []))))))

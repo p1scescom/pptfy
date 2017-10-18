@@ -1,10 +1,29 @@
-# pptfy
+## pptfy
 
-A Clojure library designed to ... well, that part is up to you.
+PPTFY is a Pdf Presentation Tool For You.
+BTW, Do you like vim style ? Love ? It's very good. Me too.
+So pptfy is vim style too.
 
 ## Usage
 
-FIXME
+### First
+
+#### Quick way
+ At first, you git clone this repository and lein run.
+
+#### Other way
+ I will ready script files. Please Wait.
+
+### Next
+
+```
+$ lein run example.pdf
+```
+
+You can already start a presentation.
+
+## Finish
+ You will be able to do a good presentaion.
 
 ## License
 

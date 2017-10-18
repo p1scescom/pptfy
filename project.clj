@@ -1,4 +1,4 @@
-(defproject pptfy "0.1.0-SNAPSHOT"
+(defproject pptfy "0.1.0"
   :description "PPTFY is a pdf presentation tool for you."
   :url "https://github.com/p1scescom/pptfy"
   :license {:name "MIT License"
